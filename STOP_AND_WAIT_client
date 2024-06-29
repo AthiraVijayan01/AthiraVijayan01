@@ -1,0 +1,81 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<unistd.h>
+#include<string.h>
+#include<arpa/inet.h>
+#define port 5057
+typedef struct packet
+{
+char data[1024];
+}Packet;
+typedef struct frame
+{
+int sequence;
+int acknowledge;
+int frame_kind;
+Packet packet;
+}Frame;
+void main(int argc,char **argv)
+{
+if(argc != 2)
+{
+printf("Error");
+exit(0);
+}
+// int port=atoi(argv[1]);
+int clientsock;
+struct sockaddr_in addr;
+char buf[1024];
+socklen_t addr_size;
+clientsock=socket(AF_INET,SOCK_DGRAM,0);
+printf("client created\n");
+memset(&addr,'\0',sizeof(addr));
+addr.sin_family=AF_INET;
+addr.sin_port=htons(port);
+addr.sin_addr.s_addr=inet_addr("127.0.0.1");
+int frame_id=0;
+Frame frame_send;
+Frame frame_recv;
+int ack_recv=1;
+addr_size=sizeof(addr);
+while(1)
+{
+/* bzero(buf,1024);
+printf("Enter message\n");
+fgets(buf,sizeof(buf),stdin);
+sendto(clientsock,buf,strlen(buf),0,(struct sockaddr*)&addr,addr_size);*/
+if(ack_recv == 1)
+{
+frame_send.sequence = frame_id;
+frame_send.frame_kind = 1;
+frame_send.acknowledge = 0;
+bzero(buf,1024);
+printf("\nEnter a message: \n");
+fgets(frame_send.packet.data,1024,stdin);
+sendto(clientsock,&frame_send,sizeof(Frame),0,(struct sockaddr*)&addr,addr_size);
+printf("PACKET SENT\n");
+}
+int f_recv_size = recvfrom(clientsock,&frame_recv,sizeof(Frame),0,(struct
+sockaddr*)&addr,&addr_size);
+if(f_recv_size > 0 && frame_recv.sequence == 0 && frame_recv.acknowledge == frame_id+1)
+{
+printf("ACK RECEIVED\n");
+ack_recv = 1;
+}
+else
+{
+printf("ACKNOWLEDGEMENT NOT RECEIVED\n");
+ack_recv = 0;
+}
+frame_id++;
+if(strncmp(frame_send.packet.data,"exit",4)==0)
+{
+printf("SERVER DISCONNECTED\n");
+break;
+}
+/*bzero(buf,1024);
+recvfrom(clientsock,buf,sizeof(buf),0,(struct sockaddr*)&addr,&addr_size);
+printf("From Server: %s",buf);*/
+}
+close(clientsock);
+}
