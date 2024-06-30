@@ -1,0 +1,76 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+#define MAX_FRAMES 10 // Maximum number of frames
+#define MAX_PAGES 100 // Maximum number of pages
+
+// Function to check if a page is already in the frame
+bool isPageInFrame(int frames[], int numOfFrames, int page) {
+    for (int i = 0; i < numOfFrames; i++) {
+        if (frames[i] == page) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Function to print the current state of frames
+void printFrames(int frames[], int numOfFrames) {
+    for (int i = 0; i < numOfFrames; i++) {
+        if (frames[i] != -1) {
+            printf("%d ", frames[i]);
+        } else {
+            printf("- ");
+        }
+    }
+    printf("\n");
+}
+
+int main() {
+    int numOfFrames, numOfPages;
+    int frames[MAX_FRAMES];
+    int pageReferences[MAX_PAGES];
+    int pageFaults = 0;
+    int nextFrameIndex = 0;
+
+    // Initialize frames to -1 to indicate they are empty
+    for (int i = 0; i < MAX_FRAMES; i++) {
+        frames[i] = -1;
+    }
+
+    printf("Enter the number of frames: ");
+    scanf("%d", &numOfFrames);
+
+    printf("Enter the number of page references: ");
+    scanf("%d", &numOfPages);
+
+    printf("Enter the page references: ");
+    for (int i = 0; i < numOfPages; i++) {
+        scanf("%d", &pageReferences[i]);
+    }
+
+    printf("\nPage Reference\tFrames\n");
+    printf("-----------------------------\n");
+
+    // Process each page reference
+    for (int i = 0; i < numOfPages; i++) {
+        int currentPage = pageReferences[i];
+        printf("%d\t\t", currentPage);
+
+        if (!isPageInFrame(frames, numOfFrames, currentPage)) {
+            // Page fault occurs
+            pageFaults++;
+            frames[nextFrameIndex] = currentPage;
+            nextFrameIndex = (nextFrameIndex + 1) % numOfFrames; // Move to the next frame
+
+            printFrames(frames, numOfFrames);
+        } else {
+            // No page fault
+            printFrames(frames, numOfFrames);
+        }
+    }
+
+    printf("\nTotal page faults: %d\n", pageFaults);
+
+    return 0;
+}
