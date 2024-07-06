@@ -1,0 +1,62 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Structure to represent a block of memory
+struct Block {
+    int size;
+    int isFree;
+    struct Block* next;
+};
+
+struct Block* head = NULL; // Head of the free list
+
+// Function to allocate memory
+void* bestFitAllocate(int size) {
+    struct Block *bestFit = NULL, *current = head;
+    while (current != NULL) {
+        if (current->isFree && current->size >= size) {
+            if (bestFit == NULL || current->size < bestFit->size) {
+                bestFit = current;
+            }
+        }
+        current = current->next;
+    }
+    if (bestFit == NULL) {
+        printf("No suitable block found\n");
+        return NULL;
+    }
+    bestFit->isFree = 0;
+    return (void*)(bestFit + 1);
+}
+
+// Function to free memory
+void bestFitFree(void* ptr) {
+    struct Block* block = (struct Block*)ptr - 1;
+    block->isFree = 1;
+}
+
+// Function to initialize memory
+void initializeMemory(int* sizes, int n) {
+    for (int i = 0; i < n; i++) {
+        struct Block* block = (struct Block*)malloc(sizeof(struct Block));
+        block->size = sizes[i];
+        block->isFree = 1;
+        block->next = head;
+        head = block;
+    }
+}
+
+int main() {
+    int sizes[] = {100, 500, 200, 300, 600};
+    int n = sizeof(sizes) / sizeof(sizes[0]);
+    initializeMemory(sizes, n);
+
+    int allocSize = 350;
+    void* ptr = bestFitAllocate(allocSize);
+    if (ptr != NULL) {
+        printf("Allocated %d bytes\n", allocSize);
+    }
+
+    bestFitFree(ptr);
+    return 0;
+}
